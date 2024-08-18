@@ -20,6 +20,7 @@ __date__ = "15-July-2022"
 __copyright__ = "Copyright (c) 2022 Cisco and/or its affiliates."
 __license__ = "Cisco Sample Code License, Version 1.1"
 
+import json
 from webexwebsocket import WebexMessage
 from webexteamssdk import WebexTeamsAPI
 import logging
@@ -27,32 +28,48 @@ import os
 import sys
 
 # Put your BOT token in environment variable "MY_BOT_TOKEN" or replace the 4 lines below with: my_bot_token="your_bot_token"
-my_bot_token = os.getenv('MY_BOT_TOKEN')
+my_bot_token = os.getenv("MY_BOT_TOKEN")
 if my_bot_token is None:
     print("**ERROR** environment variable 'MY_BOT_TOKEN' not set, stopping.")
     sys.exit(-1)
 
+# Load the adaptive_card_content.json file
+with open("adaptive_card_content.json", "r") as file:
+    adaptive_card_content = json.load(file)
+
 
 def process_message(message_obj):  # Process messages that the bot receives.
     # Access incoming message content with: message_obj.personEmail, message_obj.text, etc. Example API msg at the end of this code.
-    #___ incoming message contains the word 'hello'
+    # ___ incoming message contains the word 'hello'
     if "hello" in message_obj.text.lower():
         print("___ HELLO message received!")
-        msg_result = api.messages.create(toPersonEmail=message_obj.personEmail, markdown="# Hello to you to!")
+        msg_result = api.messages.create(
+            toPersonEmail=message_obj.personEmail, markdown="# Hello to you to!"
+        )
+    elif "form" in message_obj.text.lower():
+        print("___ Print Form message received!")
+        msg_result = api.messages.create(
+            toPersonEmail=message_obj.personEmail, 
+            attachments=[adaptive_card_content],
+            markdown="# Printing adaptive form !"
+        )
     else:
         print(f"___ OTHER message received: repeat message '{message_obj.text}'")
-        msg_result = api.messages.create(toPersonEmail=message_obj.personEmail, markdown="**You just said:** " + message_obj.text)
+        msg_result = api.messages.create(
+            toPersonEmail=message_obj.personEmail,
+            markdown="**You just said:** " + message_obj.text,
+        )
     return msg_result
 
 
-if __name__ == '__main__':
-    webex=None
-    #___Configure Logging
-    logging.basicConfig(level=logging.WARNING, format='[%(levelname)s] %(message)s')
+if __name__ == "__main__":
+    webex = None
+    # ___Configure Logging
+    logging.basicConfig(level=logging.WARNING, format="[%(levelname)s] %(message)s")
     # logging.basicConfig(level=logging.WARNING, format='%(asctime)s  [%(levelname)s]  [%(module)s.%(name)s.%(funcName)s]:%(lineno)s %(message)s')
     api = WebexTeamsAPI(access_token=my_bot_token)
     webex = WebexMessage(access_token=my_bot_token, on_message=process_message)
-    logging.warning('\n\n___Bot_started_____')
+    logging.warning("\n\n___Bot_started_____")
     webex.run()
 
 
